@@ -58,10 +58,10 @@ extension SocketEnginePollable {
         }
     }
     
-    func createPostStringFromPostWait() -> String {
+    func createPostStringFromPostWait(waiting: [String]) -> String {
         var postString = ""
         
-        for packet in postWait {
+        for packet in waiting {
             let len = packet.characters.count
             
             postString += "\(len):\(packet)"
@@ -71,9 +71,8 @@ extension SocketEnginePollable {
     }
     
     func createRequestForPostWithPostWait() -> NSURLRequest {
-        defer { postWait.removeAll(keepCapacity: true) }
-        
-        let postString = createPostStringFromPostWait()
+        let postString = createPostStringFromPostWait(postWait)
+        postWait.removeAll(keepCapacity: true)
         
         DefaultSocketLogger.Logger.log("Created POST string: %@", type: "SocketEnginePolling", args: postString)
         
@@ -91,7 +90,9 @@ extension SocketEnginePollable {
     }
     
     public func doPoll() {
-        if websocket || waitingForPoll || !connected || closed { return }
+        if websocket || waitingForPoll || !connected || closed {
+            return
+        }
         
         waitingForPoll = true
         

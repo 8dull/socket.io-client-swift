@@ -126,6 +126,7 @@
 		749642B91D3FCE5500DD32D1 /* WebSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 749642B41D3FCE5500DD32D1 /* WebSocket.swift */; };
 		749642BA1D3FCE5500DD32D1 /* WebSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 749642B41D3FCE5500DD32D1 /* WebSocket.swift */; };
 		74ABF7771C3991C10078C657 /* SocketIOClientSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74ABF7761C3991C10078C657 /* SocketIOClientSpec.swift */; };
+		74BB2F961D60E7C500609B17 /* SocketEngineMockExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74BB2F951D60E7C500609B17 /* SocketEngineMockExtensions.swift */; };
 		74BC45AB1D0C6675008CC431 /* SocketClientManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74BC45AA1D0C6675008CC431 /* SocketClientManager.swift */; };
 		74BC45AC1D0C6675008CC431 /* SocketClientManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74BC45AA1D0C6675008CC431 /* SocketClientManager.swift */; };
 		74BC45AD1D0C6675008CC431 /* SocketClientManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74BC45AA1D0C6675008CC431 /* SocketClientManager.swift */; };
@@ -203,6 +204,7 @@
 		749642B31D3FCE5500DD32D1 /* SSLSecurity.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SSLSecurity.swift; path = Source/SSLSecurity.swift; sourceTree = "<group>"; };
 		749642B41D3FCE5500DD32D1 /* WebSocket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = WebSocket.swift; path = Source/WebSocket.swift; sourceTree = "<group>"; };
 		74ABF7761C3991C10078C657 /* SocketIOClientSpec.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SocketIOClientSpec.swift; path = Source/SocketIOClientSpec.swift; sourceTree = "<group>"; };
+		74BB2F951D60E7C500609B17 /* SocketEngineMockExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocketEngineMockExtensions.swift; sourceTree = "<group>"; };
 		74BC45AA1D0C6675008CC431 /* SocketClientManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SocketClientManager.swift; path = Source/SocketClientManager.swift; sourceTree = "<group>"; };
 		74BC76F61D60CB1F00FB00D3 /* SocketMockServer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocketMockServer.swift; sourceTree = "<group>"; };
 		74BC76F81D60CDEE00FB00D3 /* SocketEngineTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocketEngineTest.swift; sourceTree = "<group>"; };
@@ -323,6 +325,7 @@
 				74321DC91C2D939A00CF6F43 /* SocketAckManagerTest.swift */,
 				74F124EF1BC574CF002966F4 /* SocketBasicPacketTest.swift */,
 				74BC76F81D60CDEE00FB00D3 /* SocketEngineTest.swift */,
+				74BB2F951D60E7C500609B17 /* SocketEngineMockExtensions.swift */,
 				741F39ED1BD025D80026C9CC /* SocketEngineParsingTest.swift */,
 				7472C65B1BCAB53E003CA70D /* SocketNamespacePacketTest.swift */,
 				747BC59E1D5F9BA200CA5FA4 /* SocketIOClientConfigurationTest.swift */,
@@ -712,6 +715,7 @@
 				74BC76F91D60CDEE00FB00D3 /* SocketEngineTest.swift in Sources */,
 				74171EA81C10CD240062D398 /* SocketIOClientStatus.swift in Sources */,
 				741F39EF1BD025D80026C9CC /* SocketEngineParsingTest.swift in Sources */,
+				74BB2F961D60E7C500609B17 /* SocketEngineMockExtensions.swift in Sources */,
 				74BC76F71D60CB1F00FB00D3 /* SocketMockServer.swift in Sources */,
 				74F124F11BC574CF002966F4 /* SocketBasicPacketTest.swift in Sources */,
 				7472C65D1BCAB53E003CA70D /* SocketNamespacePacketTest.swift in Sources */,

@@ -9,49 +9,7 @@
 import XCTest
 @testable import SocketIOClientSwift
 
-private let server = SocketMockServer()
-
-extension SocketEngine {
-    func mockConnect() {
-        server.connectEngine(self)
-    }
-    
-    // TODO: actually mock out ping calculation stuff
-    func mockHandleOpen(message: String) {
-        client?.engineDidOpen("connect")
-    }
-    
-    func mockWrite(msg: String, withType type: SocketEnginePacketType, withData data: [NSData]) {
-        dispatch_async(emitQueue) {
-            guard self.connected else { return }
-            
-            if self.websocket {
-                self.mockSendWebSocketMessage(msg, withType: type, withData: data)
-            } else if !self.probing {
-                self.mockSendPollMessage(msg, withType: type, withData: data)
-            } else {
-                self.addProbe((msg, type, data))
-            }
-        }
-    }
-    
-    func mockSendPollMessage(message: String, withType type: SocketEnginePacketType, withData datas: [NSData]) {
-        
-    }
-    
-    func mockSendWebSocketMessage(str: String, withType type: SocketEnginePacketType, withData datas: [NSData]) {
-        let sendString = "\(type.rawValue)\(str)"
-        
-        server.receiveWebSocketMessage(sendString)
-        
-        for data in datas {
-            if case let .Left(bin) = createBinaryDataForSend(data) {
-                print(bin)
-                server.receiveWebSocketBinary(bin)
-            }
-        }
-    }
-}
+let server = SocketMockServer()
 
 class SocketEngineTest : XCTestCase, SocketEngineClient {
     let data = "1".dataUsingEncoding(NSUTF8StringEncoding)!
@@ -66,6 +24,9 @@ class SocketEngineTest : XCTestCase, SocketEngineClient {
         engine = SocketEngine(client: self, url: NSURL(), config: [])
         server.waitingMessages.removeAll()
         server.waitingBinary.removeAll()
+        server.sendWaiting.removeAll()
+        server.engine = engine
+        server.testDone = false
     }
     
     func testEngineConnect() {
@@ -100,6 +61,43 @@ class SocketEngineTest : XCTestCase, SocketEngineClient {
         
         waitForExpectationsWithTimeout(3, handler: nil)
         
+    }
+    
+    func testSendPolling() {
+        engine.setTestable()
+        engine.setWebSocket(false)
+        
+        server.waitingMessages = ["hello world"]
+        server.expectation = expectationWithDescription("Engine should send polling")
+        
+        engine.mockWrite("hello world", withType: .Message, withData: [])
+        
+        waitForExpectationsWithTimeout(3, handler: nil)
+    }
+    
+    func testDoLongPoll() {
+        engine.setTestable()
+        engine.setWebSocket(false)
+        
+        server.sendWaiting = ["4hello world"]
+        server.expectation = expectationWithDescription("Engine should get long poll message")
+        
+        engine.mockDoPoll()
+        
+        waitForExpectationsWithTimeout(3, handler: nil)
+    }
+    
+    func testPollingAlsoGetsWaitingData() {
+        engine.setTestable()
+        engine.setWebSocket(false)
+        
+        server.sendWaiting = ["4hello world", "4cat"]
+        server.waitingMessages = ["hello worlddddd"]
+        server.expectation = expectationWithDescription("Engine should get long poll message")
+        
+        engine.mockWrite("hello worlddddd", withType: .Message, withData: [])
+        
+        waitForExpectationsWithTimeout(3, handler: nil)
     }
 }
 

@@ -12,21 +12,36 @@ import XCTest
 class SocketMockServer {
     let socketQueue = dispatch_queue_create("server", DISPATCH_QUEUE_SERIAL)
     
+    var currentPoll: (String) -> Void = {_ in } {
+        didSet {
+            guard !sendWaiting.isEmpty else { return }
+                        
+            let postString = engine.createPostStringFromPostWait(sendWaiting)
+            sendWaiting.removeAll()
+            
+            self.fulfillExpectation()
+            currentPoll(postString)
+        }
+    }
+    
     var engine: SocketEngine!
     var expectation: XCTestExpectation?
+    var sendWaiting = [String]()
+    var testDone = false
     var waitingBinary = [NSData]()
     var waitingMessages = [String]()
     
     func fulfillExpectation() {
-        guard waitingMessages.count == 0 && waitingBinary.count == 0 else { return }
+        guard waitingMessages.count == 0 && waitingBinary.count == 0  && sendWaiting.count == 0 else { return }
         
+        testDone = true
         expectation?.fulfill()
     }
     
     func connectEngine(engine: SocketEngine) {
         self.engine = engine
         
-        engine.mockHandleOpen("0")
+        engine.mockHandleOpen("0{}")
     }
     
     func handleBinary(data: NSData) {
@@ -65,6 +80,12 @@ class SocketMockServer {
         fulfillExpectation()
     }
     
+    func handlePoll(handler: (String) -> Void) {
+        dispatch_async(socketQueue) {
+            self.currentPoll = handler
+        }
+    }
+    
     func parsePollingMessage(message: String) {
         guard message.characters.count != 1 else { return }
         
@@ -89,9 +110,10 @@ class SocketMockServer {
         }
     }
     
-    func receivePollingMessage(message: String) {
+    func receivePollingMessage(message: String, callback: () -> Void) {
         dispatch_async(socketQueue) {
             self.parsePollingMessage(message)
+            callback()
         }
     }
     

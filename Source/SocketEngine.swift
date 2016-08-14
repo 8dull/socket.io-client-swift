@@ -575,7 +575,7 @@ extension SocketEngine {
     }
     
     func setTestable() {
-        connected = true
+        connected = !connected
     }
     
     func setWebSocket(websocket: Bool) {
