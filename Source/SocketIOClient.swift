@@ -442,7 +442,7 @@ public final class SocketIOClient : NSObject, SocketEngineClient, SocketParsable
     }
 }
 
-// Test extensions
+// Test extension
 extension SocketIOClient {
     var testHandlers: [SocketEventHandler] {
         return handlers

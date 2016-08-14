@@ -58,21 +58,27 @@ extension SocketEnginePollable {
         }
     }
     
-    func createRequestForPostWithPostWait() -> NSURLRequest {
-        defer { postWait.removeAll(keepCapacity: true) }
-
-        var postStr = ""
+    func createPostStringFromPostWait() -> String {
+        var postString = ""
         
         for packet in postWait {
             let len = packet.characters.count
             
-            postStr += "\(len):\(packet)"
+            postString += "\(len):\(packet)"
         }
         
-        DefaultSocketLogger.Logger.log("Created POST string: %@", type: "SocketEnginePolling", args: postStr)
+        return postString
+    }
+    
+    func createRequestForPostWithPostWait() -> NSURLRequest {
+        defer { postWait.removeAll(keepCapacity: true) }
+        
+        let postString = createPostStringFromPostWait()
+        
+        DefaultSocketLogger.Logger.log("Created POST string: %@", type: "SocketEnginePolling", args: postString)
         
         let req = NSMutableURLRequest(URL: urlPollingWithSid)
-        let postData = postStr.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!
+        let postData = postString.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!
         
         addHeaders(req)
         

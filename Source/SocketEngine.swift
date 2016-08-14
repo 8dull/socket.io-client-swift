@@ -152,15 +152,6 @@ public final class SocketEngine : NSObject, NSURLSessionDelegate, SocketEnginePo
             client?.engineDidError("Got unknown error from server \(msg)")
         }
     }
-
-    private func handleBase64(message: String) {
-        // binary in base64 string
-        let noPrefix = message[message.startIndex.advancedBy(2)..<message.endIndex]
-        
-        if let data = NSData(base64EncodedString: noPrefix, options: .IgnoreUnknownCharacters) {
-            client?.parseEngineBinaryData(data)
-        }
-    }
     
     private func closeOutEngine(reason: String) {
         sid = ""
@@ -342,6 +333,15 @@ public final class SocketEngine : NSObject, NSURLSessionDelegate, SocketEnginePo
         }
         
         postWait.removeAll(keepCapacity: true)
+    }
+    
+    private func handleBase64(message: String) {
+        // binary in base64 string
+        let noPrefix = message[message.startIndex.advancedBy(2)..<message.endIndex]
+        
+        if let data = NSData(base64EncodedString: noPrefix, options: .IgnoreUnknownCharacters) {
+            client?.parseEngineBinaryData(data)
+        }
     }
 
     private func handleClose(reason: String) {
@@ -555,5 +555,31 @@ extension SocketEngine {
         DefaultSocketLogger.Logger.error("Engine URLSession became invalid", type: "SocketEngine")
         
         didError("Engine URLSession became invalid")
+    }
+}
+
+// Test extensions
+extension SocketEngine {
+    func addProbe(probe: Probe) {
+        dispatch_async(emitQueue) {
+            self.probeWait.append(probe)
+        }
+    }
+    
+    func setFastUpgrade(fast val: Bool) {
+        fastUpgrade = val
+    }
+    
+    func setProbing(probe val: Bool) {
+        probing = val
+    }
+    
+    func setTestable() {
+        connected = true
+    }
+    
+    func setWebSocket(websocket: Bool) {
+        self.websocket = websocket
+        polling = !websocket
     }
 }

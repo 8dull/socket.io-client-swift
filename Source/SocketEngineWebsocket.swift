@@ -41,15 +41,15 @@ extension SocketEngineWebsocket {
     /// Send message on WebSockets
     /// Only call on emitQueue
     public func sendWebSocketMessage(str: String, withType type: SocketEnginePacketType, withData datas: [NSData]) {
-            DefaultSocketLogger.Logger.log("Sending ws: %@ as type: %@", type: "SocketEngine", args: str, type.rawValue)
-            
-            ws?.writeString("\(type.rawValue)\(str)")
-            
-            for data in datas {
-                if case let .Left(bin) = createBinaryDataForSend(data) {
-                    ws?.writeData(bin)
-                }
+        DefaultSocketLogger.Logger.log("Sending ws: %@ as type: %@", type: "SocketEngine", args: str, type.rawValue)
+        
+        ws?.writeString("\(type.rawValue)\(str)")
+        
+        for data in datas {
+            if case let .Left(bin) = createBinaryDataForSend(data) {
+                ws?.writeData(bin)
             }
+        }
     }
     
     public func websocketDidReceiveMessage(socket: WebSocket, text: String) {

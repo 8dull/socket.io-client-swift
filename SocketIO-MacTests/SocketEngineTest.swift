@@ -2,104 +2,125 @@
 //  SocketEngineTest.swift
 //  Socket.IO-Client-Swift
 //
-//  Created by Erik Little on 10/15/15.
+//  Created by Erik Little on 8/14/16.
 //
-//
+//  Tests server interactions: upgrading transport, probing, etc...
 
 import XCTest
 @testable import SocketIOClientSwift
 
-class SocketEngineTest: XCTestCase {
-    var client: SocketIOClient!
+private let server = SocketMockServer()
+
+extension SocketEngine {
+    func mockConnect() {
+        server.connectEngine(self)
+    }
+    
+    // TODO: actually mock out ping calculation stuff
+    func mockHandleOpen(message: String) {
+        client?.engineDidOpen("connect")
+    }
+    
+    func mockWrite(msg: String, withType type: SocketEnginePacketType, withData data: [NSData]) {
+        dispatch_async(emitQueue) {
+            guard self.connected else { return }
+            
+            if self.websocket {
+                self.mockSendWebSocketMessage(msg, withType: type, withData: data)
+            } else if !self.probing {
+                self.mockSendPollMessage(msg, withType: type, withData: data)
+            } else {
+                self.addProbe((msg, type, data))
+            }
+        }
+    }
+    
+    func mockSendPollMessage(message: String, withType type: SocketEnginePacketType, withData datas: [NSData]) {
+        
+    }
+    
+    func mockSendWebSocketMessage(str: String, withType type: SocketEnginePacketType, withData datas: [NSData]) {
+        let sendString = "\(type.rawValue)\(str)"
+        
+        server.receiveWebSocketMessage(sendString)
+        
+        for data in datas {
+            if case let .Left(bin) = createBinaryDataForSend(data) {
+                print(bin)
+                server.receiveWebSocketBinary(bin)
+            }
+        }
+    }
+}
+
+class SocketEngineTest : XCTestCase, SocketEngineClient {
+    let data = "1".dataUsingEncoding(NSUTF8StringEncoding)!
+    let data2 = "2".dataUsingEncoding(NSUTF8StringEncoding)!
+    
     var engine: SocketEngine!
+    var expectation: XCTestExpectation?
 
     override func setUp() {
         super.setUp()
-        client = SocketIOClient(socketURL: NSURL(string: "http://localhost")!)
-        engine = SocketEngine(client: client, url: NSURL(string: "http://localhost")!, options: nil)
         
-        client.setTestable()
+        engine = SocketEngine(client: self, url: NSURL(), config: [])
+        server.waitingMessages.removeAll()
+        server.waitingBinary.removeAll()
     }
     
-    func testBasicPollingMessage() {
-        let expectation = expectationWithDescription("Basic polling test")
-        client.on("blankTest") {data, ack in
-            expectation.fulfill()
-        }
+    func testEngineConnect() {
+        expectation = expectationWithDescription("Engine should connect")
+        engine.mockConnect()
         
-        engine.parsePollingMessage("15:42[\"blankTest\"]")
         waitForExpectationsWithTimeout(3, handler: nil)
     }
     
-    func testTwoPacketsInOnePollTest() {
-        let finalExpectation = expectationWithDescription("Final packet in poll test")
-        var gotBlank = false
+    func testSendWebSocket() {
+        engine.setTestable()
+        engine.setWebSocket(true)
         
-        client.on("blankTest") {data, ack in
-            gotBlank = true
-        }
+        server.waitingMessages = ["hello world"]
+        server.expectation = expectationWithDescription("Engine should send websocket")
         
-        client.on("stringTest") {data, ack in
-            if let str = data[0] as? String where gotBlank {
-                if str == "hello" {
-                    finalExpectation.fulfill()
-                }
-            }
-        }
+        engine.mockWrite("hello world", withType: .Message, withData: [])
         
-        engine.parsePollingMessage("15:42[\"blankTest\"]24:42[\"stringTest\",\"hello\"]")
         waitForExpectationsWithTimeout(3, handler: nil)
+        
     }
     
-    func testEngineDoesErrorOnUnknownTransport() {
-        let finalExpectation = expectationWithDescription("Unknown Transport")
+    func testSendWebSocketWithBinary() {
+        engine.setTestable()
+        engine.setWebSocket(true)
         
-        client.on("error") {data, ack in
-            if let error = data[0] as? String where error == "Unknown transport" {
-                finalExpectation.fulfill()
-            }
-        }
+        server.waitingMessages = ["hello world"]
+        server.waitingBinary = [data, data2]
+        server.expectation = expectationWithDescription("Engine should send websocket with binary")
         
-        engine.parseEngineMessage("{\"code\": 0, \"message\": \"Unknown transport\"}", fromPolling: false)
+        engine.mockWrite("hello world", withType: .Message, withData: [data, data2])
+        
         waitForExpectationsWithTimeout(3, handler: nil)
+        
+    }
+}
+
+extension SocketEngineTest {
+    func engineDidError(reason: String) {
+        
     }
     
-    func testEngineDoesErrorOnUnknownMessage() {
-        let finalExpectation = expectationWithDescription("Engine Errors")
+    func engineDidClose(reason: String) {
         
-        client.on("error") {data, ack in
-            finalExpectation.fulfill()
-        }
-        
-        engine.parseEngineMessage("afafafda", fromPolling: false)
-        waitForExpectationsWithTimeout(3, handler: nil)
     }
     
-    func testEngineDecodesUTF8Properly() {
-        let expectation = expectationWithDescription("Engine Decodes utf8")
-        
-        client.on("stringTest") {data, ack in
-            XCTAssertEqual(data[0] as? String, "lïne one\nlīne \rtwo", "Failed string test")
-            expectation.fulfill()
-        }
-
-        engine.parsePollingMessage("41:42[\"stringTest\",\"lÃ¯ne one\\nlÄ«ne \\rtwo\"]")
-        waitForExpectationsWithTimeout(3, handler: nil)
+    func engineDidOpen(reason: String) {
+        expectation?.fulfill()
     }
-
-    func testEncodeURLProperly() {
-        engine.connectParams = [
-            "created": "2016-05-04T18:31:15+0200"
-        ]
-
-        XCTAssertEqual(engine.urlPolling.query, "transport=polling&b64=1&created=2016-05-04T18%3A31%3A15%2B0200")
-        XCTAssertEqual(engine.urlWebSocket.query, "transport=websocket&created=2016-05-04T18%3A31%3A15%2B0200")
-
-        engine.connectParams = [
-            "forbidden": "!*'();:@&=+$,/?%#[]\" {}"
-        ]
-
-        XCTAssertEqual(engine.urlPolling.query, "transport=polling&b64=1&forbidden=%21%2A%27%28%29%3B%3A%40%26%3D%2B%24%2C%2F%3F%25%23%5B%5D%22%20%7B%7D")
-        XCTAssertEqual(engine.urlWebSocket.query, "transport=websocket&forbidden=%21%2A%27%28%29%3B%3A%40%26%3D%2B%24%2C%2F%3F%25%23%5B%5D%22%20%7B%7D")
+    
+    func parseEngineMessage(msg: String) {
+        
+    }
+    
+    func parseEngineBinaryData(data: NSData) {
+        
     }
 }
